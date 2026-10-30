@@ -1,0 +1,40 @@
+# vinOS installer branding. Colours: branding/palette.py
+---
+componentName:  vinos
+
+welcomeStyleCalamares:  false
+welcomeExpandingLogo:   false
+
+windowExpanding:    fullscreen
+windowSize:         1100px,700px
+windowPlacement:    center
+
+sidebar:    qml,left
+navigation: widget
+
+strings:
+    productName:         vinOS
+    shortProductName:    vinOS
+    version:             rolling
+    shortVersion:        rolling
+    versionedName:       vinOS
+    shortVersionedName:  vinOS
+    bootloaderEntryName: vinOS
+    productUrl:          https://archlinux.org
+    supportUrl:          https://wiki.archlinux.org
+    knownIssuesUrl:      https://wiki.archlinux.org
+    releaseNotesUrl:     https://archlinux.org/news/
+
+images:
+    productLogo:    "logo.png"
+    productIcon:    "icon.png"
+    productWelcome: "welcome.png"
+
+style:
+    SidebarBackground:        "#161210"
+    SidebarText:              "#8F8478"
+    SidebarTextCurrent:       "#EFE8DC"
+    SidebarBackgroundCurrent: "#211B18"
+
+slideshow:      "show.qml"
+slideshowAPI:   2

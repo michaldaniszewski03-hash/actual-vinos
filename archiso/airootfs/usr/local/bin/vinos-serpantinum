@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Install the serpantinum desktop for the new user during system installation.
+#
+#   vinos-serpantinum <user> <compositor>     (run as root inside the target)
+#
+# Prepares what vinos-desktop needs inside the installer's chroot, then runs it
+# as the user. Called from calamares/modules/contextualprocess.conf.
+#
+# Never fails the vinOS install: if anything goes wrong the base system is
+# still complete, and the log plus a note on the login screen say how to retry.
+
+set -uo pipefail
+
+user="${1:?usage: vinos-serpantinum <user> <compositor>}"
+compositor="${2:?usage: vinos-serpantinum <user> <compositor>}"
+home="$(getent passwd "$user" | cut -d: -f6)"
+log=/var/log/vinos-serpantinum.log
+sudoers=/etc/sudoers.d/99-vinos-serpantinum
+
+exec >>"$log" 2>&1
+echo "== $(date -Is) serpantinum for $user on $compositor"
+
+cleanup() {
+    rm -f "$sudoers"
+    rm -f /usr/local/bin/vinos-serpantinum
+}
+trap cleanup EXIT
+
+give_up() {
+    echo "!! $1"
+    cat >>/etc/motd <<EOF
+
+  The serpantinum desktop was not installed during setup ($1).
+  Details: $log
+  Connect to the internet (nmtui), then run:  vinos-desktop --compositor $compositor
+
+EOF
+    exit 0
+}
+
+[[ -d "$home" ]] || give_up "user $user has no home directory"
+curl -fsS --max-time 15 -o /dev/null https://github.com || give_up "no internet connection"
+
+# vinos-desktop uses sudo for pacman and makepkg. The account's password isn't
+# available here, so allow it without one for the duration of this script.
+install -m 0440 /dev/stdin "$sudoers" <<<"$user ALL=(ALL) NOPASSWD: ALL"
+
+if runuser -u "$user" -- env HOME="$home" USER="$user" LOGNAME="$user" TERM=dumb \
+        vinos-desktop --compositor "$compositor" </dev/null; then
+    echo "== serpantinum installed"
+else
+    give_up "vinos-desktop exited with status $?"
+fi

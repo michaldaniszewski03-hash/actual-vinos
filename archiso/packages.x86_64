@@ -1,0 +1,64 @@
+# Everything listed here ends up on the installed system too: the installer
+# copies the live root filesystem to disk, then removes the packages named in
+# calamares/modules/packages.conf (the installer itself, cage, archiso bits).
+
+# --- base system -------------------------------------------------------------
+base
+linux
+linux-firmware
+linux-headers
+amd-ucode
+intel-ucode
+mkinitcpio
+mkinitcpio-archiso
+sudo
+nano
+vim
+man-db
+man-pages
+bash-completion
+less
+which
+git
+htop
+fastfetch
+reflector
+
+# --- boot --------------------------------------------------------------------
+grub
+efibootmgr
+os-prober
+memtest86+
+memtest86+-efi
+syslinux
+
+# --- storage -----------------------------------------------------------------
+btrfs-progs
+dosfstools
+e2fsprogs
+exfatprogs
+ntfs-3g
+xfsprogs
+cryptsetup
+lvm2
+gptfdisk
+parted
+
+# --- network -----------------------------------------------------------------
+networkmanager
+iwd
+wireless-regdb
+openssh
+
+# --- installer session (removed after install) -------------------------------
+calamares
+cage
+qt6-wayland
+xorg-xwayland
+polkit
+mesa
+
+# --- fonts used by the installer and theme ----------------------------------
+inter-font
+ttf-jetbrains-mono
+noto-fonts

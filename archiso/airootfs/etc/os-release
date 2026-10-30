@@ -1,0 +1,7 @@
+NAME="vinOS"
+PRETTY_NAME="vinOS"
+ID=vinos
+ID_LIKE=arch
+BUILD_ID=rolling
+ANSI_COLOR="38;2;184;80;94"
+LOGO=vinos

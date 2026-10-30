@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+#
+# vinos-desktop: install or update the serpantinum desktop on vinOS.
+#
+#   vinos-desktop                      install/update, keeping the current compositor
+#   vinos-desktop --compositor niri    pick the compositor (hyprland, niri, sway, mango)
+#   vinos-desktop --ref master         use a different serpantinum branch/tag/commit
+#
+# Run as your normal user (it uses sudo for packages), never as root.
+#
+# This is serpantinum's installer (install/install.sh) by ilyamiro, modified
+# for vinOS. Original: https://github.com/ilyamiro/serpantinum
+#
+#   Copyright (C) ilyamiro and serpantinum contributors
+#   Modifications copyright (C) vinOS contributors
+#
+#   This program is free software: you can redistribute it and/or modify it
+#   under the terms of the GNU Affero General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or (at your
+#   option) any later version. It is distributed WITHOUT ANY WARRANTY; see
+#   <https://www.gnu.org/licenses/agpl-3.0.html>.
+#
+# Changes from upstream install.sh:
+#   - no interactive menu: options come from flags, saved state or defaults
+#   - telemetry removed entirely
+#   - vinOS accepted as a supported distribution
+#   - serpantinum checked out at a pinned, reviewed commit unless --ref is given
+#   - no completion screen or restart prompt; output is plain log lines
+#   - no git/pacman bootstrap before the clone (vinOS ships git)
+
+set -e
+
+# Reviewed serpantinum commit. The steps below follow install.sh at this
+# commit; when bumping it, compare against upstream's install.sh first.
+VINOS_SERPANTINUM_REF="eb7a7440ab031b95a6981ef4494428ee695d1400"
+
+REPO_SLUG="ilyamiro/serpantinum"
+CACHE_BASE="${XDG_CACHE_HOME:-$HOME/.cache}/serpantinum-installer"
+export REPO_SLUG
+export SERPANTINUM_INSTALLER=1
+
+compositor=""
+ref="$VINOS_SERPANTINUM_REF"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --compositor) compositor="$2"; shift 2 ;;
+        --ref) ref="$2"; shift 2 ;;
+        -h|--help) sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) echo "vinos-desktop: unknown option $1" >&2; exit 2 ;;
+    esac
+done
+
+if [[ $EUID -eq 0 ]]; then
+    echo "vinos-desktop: run this as your normal user, not root" >&2
+    exit 1
+fi
+
+say() { printf '\033[38;2;184;80;94m::\033[0m %s\n' "$*"; }
+
+say "fetching serpantinum ($ref)"
+if [ ! -d "$CACHE_BASE/.git" ]; then
+    rm -rf "$CACHE_BASE"
+    git clone --quiet "https://github.com/${REPO_SLUG}.git" "$CACHE_BASE"
+else
+    git -C "$CACHE_BASE" remote set-url origin "https://github.com/${REPO_SLUG}.git"
+    git -C "$CACHE_BASE" fetch --quiet origin
+fi
+git -C "$CACHE_BASE" checkout --quiet --force "$ref" 2>/dev/null \
+    || git -C "$CACHE_BASE" checkout --quiet --force "origin/$ref"
+
+PROJECT_ROOT="$CACHE_BASE"
+INSTALL_DIR="$PROJECT_ROOT/install"
+MODULES_DIR="$INSTALL_DIR/modules"
+export SERPANTINUM_DIR="$PROJECT_ROOT/src"
+export I18N_DIR="$PROJECT_ROOT/src/assets/languages"
+
+source "$PROJECT_ROOT/src/scripts/i18n.sh"
+source "$MODULES_DIR/pm.sh"
+source "$MODULES_DIR/deps.sh"
+source "$MODULES_DIR/ski.sh"
+source "$MODULES_DIR/state.sh"
+source "$MODULES_DIR/migrate.sh"
+source "$MODULES_DIR/deploy.sh"
+source "$MODULES_DIR/version.sh"
+source "$MODULES_DIR/config.sh"
+source "$MODULES_DIR/service.sh"
+source "$MODULES_DIR/ui.sh"
+
+SUPPORTED_DISTROS+=("vinos")
+TELEMETRY_ID=$(get_telemetry_id)
+ENABLE_TELEMETRY=false
+
+check_supported_os
+say "installing installer prerequisites"
+bootstrap_installer_deps
+
+INSTALL_STATE=$(detect_install_state)
+TARGET_VERSION=$(get_target_version "$PROJECT_ROOT" "$REPO_SLUG")
+TARGET_COMMIT=$(get_target_commit "$PROJECT_ROOT" "$REPO_SLUG")
+OLD_COMMIT=$(get_installed_commit)
+
+# What the menu would have asked. Compositor: flag, then the running or
+# previously installed one (upstream's own detection), then Hyprland.
+init_compositor_detection
+if [[ -n "$compositor" ]]; then
+    SELECTED_COMPOSITORS=("$compositor")
+elif [[ ${#SELECTED_COMPOSITORS[@]} -eq 0 ]]; then
+    SELECTED_COMPOSITORS=("hyprland")
+fi
+for c in "${SELECTED_COMPOSITORS[@]}"; do
+    case "$c" in
+        hyprland|niri|sway|mango) ;;
+        *) echo "vinos-desktop: unsupported compositor '$c' (hyprland, niri, sway, mango)" >&2; exit 2 ;;
+    esac
+done
+INSTALL_FULL_WALLPAPERS=true
+IS_REINSTALL=false
+# shellcheck disable=SC2034  # read by the sourced deploy.sh
+OPT_SDDM=true
+
+say "serpantinum $TARGET_VERSION on ${SELECTED_COMPOSITORS[*]} ($INSTALL_STATE)"
+
+if [[ "$INSTALL_STATE" == "legacy" ]]; then
+    migrate_legacy "${SELECTED_COMPOSITORS[@]}"
+elif [[ "$INSTALL_STATE" == "fresh" ]]; then
+    backup_compositors "${SELECTED_COMPOSITORS[@]}"
+fi
+
+say "installing packages"
+install_dependencies "$INSTALL_STATE" "$IS_REINSTALL" "${SELECTED_COMPOSITORS[@]}"
+install_ski
+
+say "deploying configuration"
+deploy_package "$PROJECT_ROOT" "$OLD_COMMIT" "$TARGET_COMMIT" "$IS_REINSTALL" "$INSTALL_STATE" "${SELECTED_COMPOSITORS[@]}"
+setup_sddm "$PROJECT_ROOT" "$INSTALL_STATE" "$IS_REINSTALL"
+install_wallpapers "$INSTALL_FULL_WALLPAPERS"
+
+WALLPAPER_DIR=$(get_wallpaper_dir)
+init_serpantinum_config "$PROJECT_ROOT" "$WALLPAPER_DIR" "$INSTALL_STATE" "$IS_REINSTALL"
+configure_ski_defaults
+
+setup_services
+write_version_state "$TARGET_VERSION" "$TARGET_COMMIT" "$TELEMETRY_ID" "$ENABLE_TELEMETRY" "${SELECTED_COMPOSITORS[*]}"
+
+if [[ "$INSTALL_STATE" == "legacy" || "$INSTALL_STATE" == "fresh" ]]; then
+    rm -f "$HOME/.local/state/serpantinum/first_launch.done" "$HOME/.local/state/quickshell/first_launch.done"
+fi
+
+cleanup_terminal 2>/dev/null || true
+if [ ${#FAILED_PKGS[@]} -gt 0 ]; then
+    say "done, but these packages failed: ${FAILED_PKGS[*]}"
+    exit 3
+fi
+say "done: serpantinum $TARGET_VERSION ($TARGET_COMMIT)"

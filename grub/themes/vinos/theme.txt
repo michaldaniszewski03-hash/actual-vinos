@@ -1,0 +1,87 @@
+# vinOS GRUB theme
+#
+# Layout is a single left-aligned column: wordmark, hairline, menu, key hints.
+# Positions are percentages so it holds up from 1024x768 to 4K; bitmaps
+# (logo, ghost mark) are separate image components so they never get
+# stretched along with the background.
+#
+# Colours come from branding/palette.py. Fonts are JetBrains Mono, rendered
+# to .pf2 with grub-mkfont (see tools/render_branding.py / README).
+
+title-text: ""
+desktop-image: "background.png"
+desktop-image-scale-method: "stretch"
+desktop-color: "#161210"
+terminal-font: "JetBrains Mono Regular 16"
+terminal-box: "terminal_box_*.png"
+terminal-left: "0"
+terminal-top: "0"
+terminal-width: "100%"
+terminal-height: "100%"
+terminal-border: "0"
+
+# Oversized mark bleeding off the right edge, almost the colour of the background
++ image {
+    left = 100%-620
+    top = 50%-450
+    width = 900
+    height = 900
+    file = "ghost.png"
+}
+
++ image {
+    left = 9%
+    top = 17%
+    file = "logo.png"
+}
+
++ image {
+    left = 9%
+    top = 17%+150
+    width = 42%
+    height = 1
+    file = "rule_c.png"
+}
+
++ boot_menu {
+    left = 9%
+    top = 17%+180
+    width = 42%
+    height = 46%
+    item_font = "JetBrains Mono Regular 22"
+    selected_item_font = "JetBrains Mono Bold 22"
+    item_color = "#8F8478"
+    selected_item_color = "#EFE8DC"
+    item_height = 52
+    item_padding = 0
+    item_spacing = 4
+    icon_width = 0
+    icon_height = 0
+    item_icon_space = 24
+    selected_item_pixmap_style = "select_*.png"
+    scrollbar = true
+    scrollbar_width = 2
+    scrollbar_frame = "scrollbar_frame_*.png"
+    scrollbar_thumb = "scrollbar_thumb_*.png"
+}
+
++ label {
+    left = 9%
+    top = 100%-96
+    width = 60%
+    height = 24
+    font = "JetBrains Mono Regular 16"
+    color = "#5E544B"
+    text = "up/down  select      enter  boot      e  edit      c  console"
+}
+
++ label {
+    id = "__timeout__"
+    left = 9%
+    top = 100%-130
+    width = 42%
+    height = 24
+    font = "JetBrains Mono Regular 16"
+    color = "#B8505E"
+    text = "booting in %d s"
+}

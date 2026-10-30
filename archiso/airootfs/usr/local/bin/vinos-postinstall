@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Runs inside the freshly unpacked target (chroot) right after the live
+# filesystem has been copied. Turns the live image into a normal installed
+# system. Called by calamares/modules/shellprocess@cleanup.conf.
+set -euo pipefail
+
+# Live-only configuration
+rm -f  /etc/mkinitcpio.conf.d/archiso.conf
+rm -rf /etc/systemd/system/getty@tty1.service.d
+rm -f  /etc/systemd/system/pacman-init.service \
+       /etc/systemd/system/etc-pacman.d-gnupg.mount \
+       /etc/systemd/system/multi-user.target.wants/pacman-init.service
+rm -f  /etc/systemd/journald.conf.d/volatile-storage.conf \
+       /etc/systemd/logind.conf.d/do-not-suspend.conf
+rm -f  /root/.bash_profile
+rm -rf /etc/calamares
+rm -f  /usr/local/bin/vinos-installer
+
+# Root keeps its bash shell but gets a locked password until the users
+# module sets one (or leaves it locked if the user chose not to).
+passwd -l root >/dev/null
+
+# The live image keeps its keyring on tmpfs, so the target has none yet.
+pacman-key --init
+pacman-key --populate archlinux
+
+rm -f /usr/local/bin/vinos-postinstall

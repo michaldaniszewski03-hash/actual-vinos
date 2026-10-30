@@ -1,0 +1,364 @@
+/*
+ * vinOS installer stylesheet.
+ *
+ * Light "paper" content area against the dark sidebar. One accent colour
+ * (oxblood), used for the primary action, focus and selection only.
+ *
+ *   paper    #EFE8DC   field    #F8F4ED   recessed #E4DACA
+ *   ink      #161210   sepia    #5E544B   muted    #8F8478
+ *   line     #CDBFAB   accent   #8C2F39   accent-d #74242E
+ *
+ * Image paths are absolute: Qt resolves relative url()s against the
+ * process working directory, not this file.
+ */
+
+* {
+    font-family: "Inter";
+    font-size: 14px;
+}
+
+#mainApp,
+QStackedWidget,
+QScrollArea,
+QScrollArea > QWidget > QWidget {
+    background-color: #EFE8DC;
+}
+
+QWidget {
+    color: #161210;
+    selection-background-color: #8C2F39;
+    selection-color: #EFE8DC;
+}
+
+QLabel {
+    color: #161210;
+    background: transparent;
+}
+
+QLabel:disabled {
+    color: #8F8478;
+}
+
+QToolTip {
+    background-color: #161210;
+    color: #EFE8DC;
+    border: none;
+    padding: 6px 8px;
+}
+
+/* ------------------------------------------------------------- buttons */
+
+QPushButton {
+    background-color: transparent;
+    color: #161210;
+    border: 1px solid #CDBFAB;
+    border-radius: 3px;
+    padding: 8px 18px;
+    min-height: 18px;
+}
+
+QPushButton:hover {
+    background-color: #E4DACA;
+}
+
+QPushButton:pressed {
+    background-color: #D9CDBA;
+}
+
+QPushButton:focus {
+    border-color: #8C2F39;
+}
+
+QPushButton:disabled {
+    color: #B3A796;
+    border-color: #DDD2C1;
+}
+
+QPushButton#view-button-next,
+QPushButton#view-button-install {
+    background-color: #8C2F39;
+    border-color: #8C2F39;
+    color: #F8F4ED;
+    font-weight: 600;
+    min-width: 96px;
+}
+
+QPushButton#view-button-next:hover,
+QPushButton#view-button-install:hover {
+    background-color: #74242E;
+    border-color: #74242E;
+}
+
+QPushButton#view-button-next:disabled {
+    background-color: #D9C3C0;
+    border-color: #D9C3C0;
+    color: #F8F4ED;
+}
+
+QPushButton#view-button-back {
+    min-width: 72px;
+}
+
+QPushButton#view-button-cancel {
+    border-color: transparent;
+    color: #5E544B;
+}
+
+QPushButton#view-button-cancel:hover {
+    background-color: transparent;
+    color: #8C2F39;
+}
+
+/* ------------------------------------------------------------- inputs */
+
+QLineEdit,
+QSpinBox,
+QComboBox,
+QPlainTextEdit,
+QTextEdit {
+    background-color: #F8F4ED;
+    color: #161210;
+    border: 1px solid #CDBFAB;
+    border-radius: 3px;
+    padding: 6px 8px;
+    min-height: 20px;
+}
+
+QLineEdit:focus,
+QSpinBox:focus,
+QComboBox:focus,
+QPlainTextEdit:focus,
+QTextEdit:focus {
+    border-color: #8C2F39;
+}
+
+QLineEdit:disabled,
+QComboBox:disabled {
+    background-color: #E4DACA;
+    color: #8F8478;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 28px;
+}
+
+QComboBox::down-arrow {
+    image: url(/etc/calamares/branding/vinos/chevron-down.png);
+    width: 12px;
+    height: 8px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #F8F4ED;
+    border: 1px solid #CDBFAB;
+    outline: none;
+    padding: 4px;
+}
+
+QSpinBox::up-button,
+QSpinBox::down-button {
+    border: none;
+    width: 22px;
+}
+
+QSpinBox::up-arrow {
+    image: url(/etc/calamares/branding/vinos/chevron-up.png);
+    width: 12px;
+    height: 8px;
+}
+
+QSpinBox::down-arrow {
+    image: url(/etc/calamares/branding/vinos/chevron-down.png);
+    width: 12px;
+    height: 8px;
+}
+
+/* ------------------------------------------------------------- lists */
+
+QListView,
+QListWidget,
+QTreeView,
+QTreeWidget,
+QTableView {
+    background-color: #F8F4ED;
+    alternate-background-color: #F3EDE3;
+    border: 1px solid #CDBFAB;
+    border-radius: 3px;
+    outline: none;
+}
+
+QListView::item,
+QListWidget::item,
+QTreeView::item {
+    padding: 5px 6px;
+    border: none;
+}
+
+QListView::item:hover,
+QListWidget::item:hover,
+QTreeView::item:hover {
+    background-color: #EDE5D8;
+}
+
+QListView::item:selected,
+QListWidget::item:selected,
+QTreeView::item:selected,
+QTableView::item:selected {
+    background-color: #8C2F39;
+    color: #F8F4ED;
+}
+
+QHeaderView::section {
+    background-color: #E4DACA;
+    color: #5E544B;
+    border: none;
+    border-bottom: 1px solid #CDBFAB;
+    padding: 6px 8px;
+    font-size: 12px;
+}
+
+/* ------------------------------------------------------------- choice */
+
+QRadioButton,
+QCheckBox {
+    spacing: 10px;
+    background: transparent;
+}
+
+QRadioButton::indicator,
+QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #A89A86;
+    background-color: #F8F4ED;
+}
+
+QRadioButton::indicator {
+    border-radius: 8px;
+}
+
+QCheckBox::indicator {
+    border-radius: 2px;
+}
+
+QRadioButton::indicator:hover,
+QCheckBox::indicator:hover {
+    border-color: #8C2F39;
+}
+
+QRadioButton::indicator:checked {
+    border: 4px solid #8C2F39;
+    width: 8px;
+    height: 8px;
+    background-color: #F8F4ED;
+}
+
+QCheckBox::indicator:checked {
+    border-color: #8C2F39;
+    background-color: #8C2F39;
+    image: url(/etc/calamares/branding/vinos/check.png);
+}
+
+/* Partition page puts each choice in a big button-like radio; keep it calm */
+QAbstractButton#choiceButton {
+    background: transparent;
+}
+
+/* ------------------------------------------------------------- progress */
+
+QProgressBar {
+    background-color: #E4DACA;
+    border: none;
+    border-radius: 2px;
+    max-height: 4px;
+    text-align: center;
+    color: transparent;
+}
+
+QProgressBar::chunk {
+    background-color: #8C2F39;
+    border-radius: 2px;
+}
+
+/* ------------------------------------------------------------- scrollbars */
+
+QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 2px;
+}
+
+QScrollBar:horizontal {
+    background: transparent;
+    height: 8px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical,
+QScrollBar::handle:horizontal {
+    background: #CDBFAB;
+    border-radius: 2px;
+    min-height: 24px;
+    min-width: 24px;
+}
+
+QScrollBar::handle:hover {
+    background: #A89A86;
+}
+
+QScrollBar::add-line,
+QScrollBar::sub-line,
+QScrollBar::add-page,
+QScrollBar::sub-page {
+    background: none;
+    border: none;
+    width: 0;
+    height: 0;
+}
+
+/* ------------------------------------------------------------- misc */
+
+QSplitter::handle {
+    background-color: #CDBFAB;
+}
+
+QGroupBox {
+    border: 1px solid #CDBFAB;
+    border-radius: 3px;
+    margin-top: 14px;
+    padding-top: 10px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 4px;
+    color: #5E544B;
+}
+
+QTabWidget::pane {
+    border: 1px solid #CDBFAB;
+    border-radius: 3px;
+}
+
+QTabBar::tab {
+    background: transparent;
+    color: #5E544B;
+    padding: 8px 14px;
+    border-bottom: 2px solid transparent;
+}
+
+QTabBar::tab:selected {
+    color: #161210;
+    border-bottom-color: #8C2F39;
+}
+
+/* ------------------------------------------------------------- welcome */
+
+QLabel#mainText {
+    font-family: "Instrument Serif";
+    font-size: 34px;
+    font-weight: normal;
+    color: #161210;
+}
