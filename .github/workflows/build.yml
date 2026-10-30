@@ -1,0 +1,59 @@
+name: Build ISO
+
+# Every push to main builds the ISO and attaches it to the workflow run
+# (Actions tab → run → Artifacts). Pushing a tag like v2026.11 also publishes
+# a GitHub Release with the ISO and its checksum.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths-ignore: ["**.md", "docs/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: iso-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  iso:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: archlinux:latest
+      # mkarchiso uses mount namespaces and loop devices
+      options: --privileged
+
+    steps:
+      - name: Install build tools
+        run: |
+          pacman-key --init
+          pacman -Syu --noconfirm --needed archiso grub git base-devel
+
+      - uses: actions/checkout@v4
+
+      - name: Build ISO
+        run: bash build.sh
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: vinos-iso
+          path: |
+            out/*.iso
+            out/*.sha256
+          compression-level: 0
+          retention-days: 14
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/*.iso
+            out/*.sha256
+          generate_release_notes: true
+
