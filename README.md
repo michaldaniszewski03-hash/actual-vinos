@@ -18,6 +18,7 @@ An Arch-based Linux distribution with its own graphical installer, boot theme an
 | `calamares/` | Installer configuration and the `vinos` branding: stylesheet, sidebar, slideshow, images |
 | `grub/themes/vinos/` | GRUB theme, used on the live USB (UEFI) and on installed systems |
 | `fastfetch/` | fastfetch config and the vinOS ASCII logo |
+| `desktop/` | Wallpapers and default settings for KDE Plasma and GNOME, copied into the system as-is |
 | `branding/` | Palette, logo files, fonts |
 | `pkg/calamares/` | PKGBUILD for Calamares (not in the official Arch repos) |
 | `tools/` | Asset renderers and the Calamares build helper |
@@ -44,6 +45,8 @@ git push origin v2026.11
 
 A build takes roughly 30–60 minutes, most of it compiling Calamares.
 
+**Uploading through the GitHub website works.** Nothing in the tree depends on hidden files (other than `.github/`), symlinks or executable bits surviving; `build.sh` creates those during the build. If you upload by drag-and-drop, check that the `.github` folder made it, since Finder and file pickers hide it.
+
 ### Locally, on Arch
 
 ```bash
@@ -66,17 +69,34 @@ run_archiso -u -i out/vinos-*.iso
 
 ## How the install works
 
-The live USB boots straight into the installer: root is logged in automatically on tty1, which starts Calamares full-screen inside `cage` (a single-window Wayland kiosk). Ctrl+Alt+F2 gives a plain root shell.
+The live USB boots straight into the installer: root is logged in automatically on tty1, which starts a full-screen `cage` session (a single-window Wayland kiosk). Ctrl+Alt+F2 gives a plain root shell.
 
-Calamares copies the live root filesystem to disk, then `vinos-postinstall` removes the live-session bits (autologin, the archiso initramfs hooks, the installer itself) and sets up the pacman keyring. After that come the initramfs, users, services and GRUB with the vinOS theme. The base system installs without a network connection.
+1. **Network.** If there's no connection after a few seconds but there is Wi-Fi hardware, a short "Connect to the internet" screen comes first, with `nmtui` for picking a network. Ethernet connects on its own and skips this. It can be skipped; the base system installs offline.
+2. **Installer.** Calamares asks for language, location, keyboard, desktop, disk and account, then installs.
+3. **Base system.** Calamares copies the live root filesystem to disk, then `vinos-postinstall` removes the live-session pieces (autologin, the archiso initramfs hooks, the installer) and sets up the pacman keyring. Then the initramfs, users, services, and GRUB with the vinOS theme.
+4. **Desktop.** Installed last, by `vinos-install-desktop`, with no questions asked (below).
 
-### Desktop: serpantinum, installed hands-free
+The installed system includes `base-devel`, PipeWire audio, Bluetooth, NetworkManager, firmware for most laptops' sound, fastfetch and the usual command-line tools.
 
-The installer's **Desktop** page offers [serpantinum](https://github.com/ilyamiro/serpantinum) by ilyamiro on Hyprland (the default), niri, Sway or MangoWC, or a plain base system. That click is the only input: the desktop is downloaded and set up during the install, with no terminal menu and no prompts.
+### Desktop choices
 
-This is done by **`vinos-desktop`** (`archiso/airootfs/usr/local/bin/vinos-desktop`), vinOS's edition of serpantinum's `install/install.sh`. It's a modified copy under the same licence (AGPL-3.0-or-later), with ilyamiro's copyright kept. Changes from upstream, also listed in the file header:
+The **Desktop** page offers:
+
+| Choice | What's installed |
+|---|---|
+| **Hyprland** (default), **niri**, **Sway**, **MangoWC** | [serpantinum](https://github.com/ilyamiro/serpantinum) by ilyamiro on that compositor, with SDDM |
+| **KDE Plasma** | Plasma, SDDM, Konsole, Dolphin, Kate, Ark, Spectacle, Gwenview, Okular, Firefox, Flatpak; vinOS wallpaper on desktop, lock screen and login |
+| **GNOME** | GNOME with GDM, GNOME Tweaks, Firefox, Flatpak; vinOS wallpaper (dark and light) |
+| **Base system only** | Console login; works offline |
+
+Everything after picking is unattended. `vinos-install-desktop` runs inside the new system after the bootloader is installed, so a failure can never leave the machine unbootable. It refreshes the mirror list with reflector, installs the packages, enables the login manager and boots to it. If it fails (no network, a package error), the install still finishes. `/var/log/vinos-install-desktop.log` has the details, and the console login screen shows the exact command to retry.
+
+### vinos-desktop: serpantinum, without the menu
+
+The serpantinum options use **`vinos-desktop`** (`archiso/airootfs/usr/local/bin/vinos-desktop`), vinOS's edition of serpantinum's `install/install.sh`. It's a modified copy under the same licence (AGPL-3.0-or-later), with ilyamiro's copyright kept. Changes from upstream, also listed in the file header:
 
 - **No interactive menu.** The compositor comes from `--compositor`, then from what's already installed, then Hyprland. Wallpapers: full pack. Login manager: SDDM.
+- **Unattended.** During installation it asks nothing. Run later by hand, it asks for the sudo password once and keeps it fresh through long AUR builds. yay and paru review menus are switched off, unless the user already has their own config.
 - **No telemetry.** The calls are removed, not just switched off.
 - **vinOS is a supported distribution**, so the upstream "unsupported OS" check passes.
 - **Pinned upstream version.** It checks out a reviewed serpantinum commit (`VINOS_SERPANTINUM_REF`) instead of `master`; `--ref master` overrides it.
@@ -92,10 +112,6 @@ vinos-desktop
 vinos-desktop --compositor niri
 ```
 
-During installation, `vinos-serpantinum` runs it inside the new system as the new user, with temporary passwordless sudo. That step runs after the bootloader is installed, so a failure can't leave the machine unbootable. If it fails (no network, a package error), the install still finishes, `/var/log/vinos-serpantinum.log` has the details, and the login screen says to run `vinos-desktop`.
-
-It needs internet and takes a while: about 80 packages, some built from the AUR. The base-system option installs offline.
-
 **Updating the pinned commit:** diff upstream's `install/install.sh` against `vinos-desktop`, carry over any new steps, then bump `VINOS_SERPANTINUM_REF`.
 
 ## Changing the look
@@ -110,7 +126,7 @@ python3 tools/render_branding.py
 python3 tools/render_ascii.py > fastfetch/vinos.txt
 ```
 
-These regenerate every PNG (GRUB, syslinux splash, installer images, logos) and the fastfetch logo. `stylesheet.qss`, `calamares-sidebar.qml`, `show.qml`, `theme.txt` and the syslinux config use the same hex values written out by hand; grep for the old value.
+These regenerate every image (GRUB, syslinux splash, installer images, Desktop-page cards, wallpapers, logos) and the fastfetch logo. `stylesheet.qss`, `calamares-sidebar.qml`, `show.qml`, `theme.txt` and the syslinux config use the same hex values written out by hand; grep for the old value.
 
 GRUB fonts are bitmap `.pf2` files. To change the font or size:
 
@@ -125,10 +141,11 @@ What has been run, and what hasn't:
 - **GRUB theme:** rendered by real GRUB 2.12 booted in QEMU; the screenshot above is from that.
 - **Installer pages:** rendered by a real Calamares 3.3 binary with this config and branding. The screenshots are from that.
 - **Slideshow:** rendered through Calamares' slideshow QML module.
+- **Wi-Fi screen:** rendered in a real `cage` and `foot` session.
+- **`build.sh`:** dry run checks that every file `mkarchiso` sets permissions on exists in the assembled profile. A missing one is the most common way an archiso build breaks.
 - **Shell scripts:** pass `shellcheck`.
-- **`build.sh`:** assembly of the profile tested.
 - **`vinos-desktop`:** run as a normal user against a vinOS `os-release`, up to the point where it installs packages. Covered: the distro check, compositor selection and defaults, rejection of unknown compositors and non-Arch systems, telemetry off, pinned commit.
-- **Not run yet:** `mkarchiso`, the Calamares PKGBUILD build, a full end-to-end install, and serpantinum's package and config steps. All of these need an Arch host. The first GitHub Actions run is the real test of the ISO build; after that, do a test install in a VM before handing the ISO to anyone.
+- **Not run yet:** `mkarchiso`, the Calamares PKGBUILD build, a full end-to-end install, serpantinum's package and config steps, and the KDE Plasma and GNOME installs. All of these need an Arch host. The first GitHub Actions run is the real test of the ISO build; after that, do a test install in a VM before handing the ISO to anyone.
 
 ## Licences
 

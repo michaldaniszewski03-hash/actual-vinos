@@ -90,9 +90,9 @@ Presentation {
     VinSlide {
         kicker: "03 / 04"
         headline: "Your desktop comes last."
-        body: "If you picked serpantinum, it's downloaded and set up after the base system "
-            + "is in place. That part needs the network and can take a while, so the bar "
-            + "may sit near the end for some minutes."
+        body: "KDE Plasma, GNOME or serpantinum is downloaded and set up after the base "
+            + "system is in place. That part needs the network and can take a while, so the "
+            + "bar may sit near the end for some minutes."
     }
 
     VinSlide {

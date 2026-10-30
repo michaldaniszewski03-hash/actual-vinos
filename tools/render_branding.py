@@ -197,6 +197,8 @@ def render_desktop_cards():
         "niri": ("niri", "serpantinum · scrollable tiling"),
         "sway": ("Sway", "serpantinum · i3-style tiling"),
         "mango": ("MangoWC", "serpantinum · dwl-style tiling"),
+        "plasma": ("KDE Plasma", "full desktop · familiar layout"),
+        "gnome": ("GNOME", "full desktop · activities workflow"),
     }
     w, h = 560, 340
     for key, (title, sub) in cards.items():
@@ -209,6 +211,29 @@ def render_desktop_cards():
         if key != "base":
             d.rectangle((36, 36, 36 + 28, 36 + 3), fill=rgba(P.ACCENT_HI))
         img.convert("RGB").save(out / f"{key}.png", optimize=True)
+
+
+WALLPAPERS = ROOT / "desktop" / "usr" / "share" / "backgrounds" / "vinos"
+
+
+def render_wallpapers():
+    """4K wallpapers used as the default on GNOME and KDE Plasma installs.
+
+    The mark is cropped by the right edge so it reads as texture, not a logo
+    slapped in the middle. JPEG because the grain makes PNGs ~20 MB.
+    """
+    WALLPAPERS.mkdir(parents=True, exist_ok=True)
+    w, h = 3840, 2160
+    variants = {
+        "vinos-dark": (P.INK, "#0B0908", "#211B18", "#3A1C22", 0.75),
+        "vinos-light": (P.PAPER, "#D9CDBA", "#E2D7C6", "#D9B9B6", 0.5),
+    }
+    for name, (base, edge, thick, thin, strength) in variants.items():
+        img = vignette((w, h), base, edge, strength).convert("RGBA")
+        g = mark(1800, thick=thick, thin=thin)
+        img.alpha_composite(g, (w - 1750, (h - 1800) // 2))
+        img = grain(img, amount=4, seed=11)
+        img.save(WALLPAPERS / f"{name}.jpg", quality=92, optimize=True, progressive=True)
 
 
 # ---------------------------------------------------------------- loose logo files
@@ -229,4 +254,5 @@ if __name__ == "__main__":
     render_syslinux()
     render_calamares()
     render_desktop_cards()
+    render_wallpapers()
     print("rendered into", ROOT)

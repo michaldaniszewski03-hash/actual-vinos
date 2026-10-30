@@ -1,0 +1,15 @@
+# vinOS defaults for GNOME. Compiled by glib2's pacman hook when GNOME is installed.
+[org.gnome.desktop.background]
+picture-uri='file:///usr/share/backgrounds/vinos/vinos-light.jpg'
+picture-uri-dark='file:///usr/share/backgrounds/vinos/vinos-dark.jpg'
+picture-options='zoom'
+primary-color='#161210'
+
+[org.gnome.desktop.screensaver]
+picture-uri='file:///usr/share/backgrounds/vinos/vinos-dark.jpg'
+picture-options='zoom'
+primary-color='#161210'
+
+[org.gnome.desktop.interface]
+color-scheme='prefer-dark'
+accent-color='red'

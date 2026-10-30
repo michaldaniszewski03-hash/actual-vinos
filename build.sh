@@ -48,6 +48,19 @@ install -Dm644 "$root/fastfetch/vinos.txt" "$air/usr/share/vinos/fastfetch/vinos
 install -Dm644 "$root/branding/logo/vinos-mark-dark.svg" "$air/usr/share/icons/hicolor/scalable/apps/vinos.svg"
 install -Dm644 "$root/branding/logo/vinos-mark-dark.svg" "$air/usr/share/pixmaps/vinos.svg"
 
+# Wallpapers and desktop defaults (GNOME, KDE Plasma)
+cp -a "$root/desktop/." "$air/"
+
+# Enabled services. Created here rather than committed: symlinks don't
+# survive zip files or GitHub's web upload.
+wants="$air/etc/systemd/system/multi-user.target.wants"
+mkdir -p "$wants"
+ln -sf /usr/lib/systemd/system/NetworkManager.service "$wants/NetworkManager.service"
+ln -sf /etc/systemd/system/pacman-init.service "$wants/pacman-init.service"
+
+# Same reason: the tree must not depend on executable bits surviving.
+chmod 0755 "$air"/usr/local/bin/*
+
 # Local repo with the calamares package
 cat >>"$profile/pacman.conf" <<CONF
 

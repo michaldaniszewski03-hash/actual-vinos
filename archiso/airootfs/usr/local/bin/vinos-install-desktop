@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# Install the desktop picked on the installer's Desktop page.
+#
+#   vinos-install-desktop <user> <choice>      (run as root inside the target)
+#
+#   hyprland | niri | sway | mango   serpantinum on that compositor (via vinos-desktop)
+#   plasma                            KDE Plasma with SDDM
+#   gnome                             GNOME with GDM
+#
+# Called from calamares/modules/contextualprocess.conf, after the bootloader
+# is installed. Never fails the vinOS install: if anything goes wrong the base
+# system is still complete, and the log plus a note on the login screen say
+# how to retry.
+
+set -uo pipefail
+
+user="${1:?usage: vinos-install-desktop <user> <choice>}"
+choice="${2:?usage: vinos-install-desktop <user> <choice>}"
+home="$(getent passwd "$user" | cut -d: -f6)"
+log=/var/log/vinos-install-desktop.log
+sudoers=/etc/sudoers.d/99-vinos-install-desktop
+
+# Shared by the full desktops: browser, audio, bluetooth, printing-free basics,
+# Flatpak so the software centres have something to install from.
+common_pkgs=(
+    firefox pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber
+    bluez bluez-utils power-profiles-daemon xdg-user-dirs xdg-desktop-portal
+    flatpak noto-fonts-emoji noto-fonts-cjk ttf-liberation
+)
+plasma_pkgs=(
+    plasma-meta sddm konsole dolphin kate ark spectacle gwenview okular kcalc
+    filelight partitionmanager kdeconnect ffmpegthumbs xdg-desktop-portal-kde
+)
+gnome_pkgs=(
+    gnome gnome-tweaks gnome-browser-connector xdg-desktop-portal-gnome
+)
+
+exec >>"$log" 2>&1
+echo "== $(date -Is) desktop '$choice' for $user"
+
+cleanup() {
+    rm -f "$sudoers"
+    rm -f /usr/local/bin/vinos-install-desktop
+}
+trap cleanup EXIT
+
+give_up() {
+    local retry="$2"
+    echo "!! $1"
+    cat >>/etc/motd <<EOF
+
+  The desktop you picked was not installed during setup ($1).
+  Details: $log
+  Connect to the internet (nmtui), then run:  $retry
+
+EOF
+    exit 0
+}
+
+pacman_install() {
+    # --noconfirm takes the default answer to provider questions; --needed
+    # skips what's already there. Retry once for a flaky mirror.
+    pacman -S --noconfirm --needed "$@" || { pacman -Syy && pacman -S --noconfirm --needed "$@"; }
+}
+
+case "$choice" in
+    hyprland|niri|sway|mango) retry="vinos-desktop --compositor $choice" ;;
+    plasma) retry="sudo pacman -S ${plasma_pkgs[*]} && sudo systemctl enable sddm" ;;
+    gnome)  retry="sudo pacman -S ${gnome_pkgs[*]} && sudo systemctl enable gdm" ;;
+    *) give_up "unknown desktop '$choice'" "vinos-desktop" ;;
+esac
+
+[[ -d "$home" ]] || give_up "user $user has no home directory" "$retry"
+curl -fsS --max-time 15 -o /dev/null https://archlinux.org || give_up "no internet connection" "$retry"
+
+# Fresh mirror list for the user's location; keep the shipped one if this fails.
+reflector --latest 20 --protocol https --sort rate --save /etc/pacman.d/mirrorlist --connection-timeout 5 \
+    || echo "reflector failed, keeping the default mirror list"
+pacman -Syy
+
+case "$choice" in
+    plasma)
+        pacman_install "${common_pkgs[@]}" "${plasma_pkgs[@]}" || give_up "package installation failed" "$retry"
+        systemctl enable sddm.service
+        ;;
+    gnome)
+        pacman_install "${common_pkgs[@]}" "${gnome_pkgs[@]}" || give_up "package installation failed" "$retry"
+        systemctl enable gdm.service
+        ;;
+    *)
+        # vinos-desktop uses sudo for pacman and makepkg. The account's
+        # password isn't available here, so allow it without one until this
+        # script exits.
+        install -m 0440 /dev/stdin "$sudoers" <<<"$user ALL=(ALL) NOPASSWD: ALL"
+        runuser -u "$user" -- env HOME="$home" USER="$user" LOGNAME="$user" TERM=dumb \
+            vinos-desktop --compositor "$choice" </dev/null \
+            || give_up "vinos-desktop exited with status $?" "$retry"
+        ;;
+esac
+
+systemctl enable bluetooth.service 2>/dev/null || true
+systemctl set-default graphical.target
+runuser -u "$user" -- env HOME="$home" xdg-user-dirs-update 2>/dev/null || true
+echo "== desktop '$choice' installed"

@@ -27,6 +27,8 @@
 #   - serpantinum checked out at a pinned, reviewed commit unless --ref is given
 #   - no completion screen or restart prompt; output is plain log lines
 #   - no git/pacman bootstrap before the clone (vinOS ships git)
+#   - fully unattended: one sudo prompt up front (none during installation),
+#     AUR helper review menus switched off
 
 set -e
 
@@ -56,6 +58,36 @@ if [[ $EUID -eq 0 ]]; then
 fi
 
 say() { printf '\033[38;2;184;80;94m::\033[0m %s\n' "$*"; }
+
+# Everything below runs unattended. Ask for the sudo password once, up front
+# (no-op when sudo needs none, as during system installation), and keep the
+# ticket alive so a long AUR build doesn't stop for it again.
+if ! sudo -n true 2>/dev/null; then
+    say "your password is needed once, for installing packages"
+    sudo -v
+fi
+( while kill -0 $$ 2>/dev/null; do sudo -n true 2>/dev/null; sleep 50; done ) &
+
+# AUR helpers would otherwise stop to offer clean builds, diffs and edits.
+# Only written when the user has no config of their own.
+if [[ ! -f "$HOME/.config/yay/config.json" ]]; then
+    mkdir -p "$HOME/.config/yay"
+    cat >"$HOME/.config/yay/config.json" <<'JSON'
+{
+  "cleanmenu": false,
+  "diffmenu": false,
+  "editmenu": false,
+  "answerclean": "None",
+  "answerdiff": "None",
+  "answeredit": "None",
+  "removemake": "yes"
+}
+JSON
+fi
+if [[ ! -f "$HOME/.config/paru/paru.conf" ]]; then
+    mkdir -p "$HOME/.config/paru"
+    printf '[options]\nSkipReview\nRemoveMake\n' >"$HOME/.config/paru/paru.conf"
+fi
 
 say "fetching serpantinum ($ref)"
 if [ ! -d "$CACHE_BASE/.git" ]; then
