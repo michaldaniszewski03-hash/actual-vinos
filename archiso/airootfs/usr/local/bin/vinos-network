@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Wi-Fi step shown before the installer when the machine is offline.
+
+accent=$'\033[38;2;184;80;94m'; dim=$'\033[38;2;143;132;120m'; bold=$'\033[1m'; off=$'\033[0m'
+
+printf '\033[?25l'
+while true; do
+    clear
+    printf '\n  %svinOS%s\n\n' "$bold" "$off"
+    printf '  %sConnect to the internet%s\n\n' "$accent" "$off"
+    printf '  KDE Plasma, GNOME and the serpantinum desktops are downloaded during\n'
+    printf '  the install. The base system installs without a connection.\n\n'
+    printf '  %s[enter]%s choose a Wi-Fi network    %s[s]%s skip\n' "$accent" "$off" "$accent" "$off"
+    read -rsn1 key
+    [[ $key == s || $key == S ]] && exit 0
+
+    nmtui-connect
+    if nm-online -q -t 10; then
+        clear
+        printf '\n  %sConnected.%s Opening the installer...\n' "$accent" "$off"
+        sleep 1.5
+        exit 0
+    fi
+    printf '\n  %sStill offline.%s Press any key to try again.\n' "$dim" "$off"
+    read -rsn1
+done

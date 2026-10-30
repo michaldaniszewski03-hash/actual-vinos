@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Runs inside cage. If there's no network yet but there is Wi-Fi hardware,
+# offer to connect first (desktops are downloaded during the install), then
+# open the installer. Cage shows whichever window is newest, full-screen.
+
+if ! nm-online -q -t 12 && nmcli -t -f TYPE device 2>/dev/null | grep -qx wifi; then
+    foot --app-id=vinos-network \
+        -o main.font="JetBrains Mono:size=13" -o main.pad=48x40 \
+        -o colors.background=161210 -o colors.foreground=efe8dc \
+        -o colors.regular1=b8505e -o colors.bright1=b8505e \
+        -o colors.selection-background=8c2f39 -o colors.selection-foreground=efe8dc \
+        vinos-network
+fi
+
+exec calamares

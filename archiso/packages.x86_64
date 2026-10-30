@@ -23,6 +23,18 @@ git
 htop
 fastfetch
 reflector
+base-devel
+pacman-contrib
+wget
+curl
+rsync
+zip
+unzip
+p7zip
+usbutils
+pciutils
+smartmontools
+xdg-user-dirs
 
 # --- boot --------------------------------------------------------------------
 grub
@@ -44,6 +56,17 @@ lvm2
 gptfdisk
 parted
 
+# --- audio & bluetooth -------------------------------------------------------
+pipewire
+pipewire-alsa
+pipewire-pulse
+wireplumber
+alsa-utils
+sof-firmware
+alsa-firmware
+bluez
+bluez-utils
+
 # --- network -----------------------------------------------------------------
 networkmanager
 iwd
@@ -53,6 +76,7 @@ openssh
 # --- installer session (removed after install) -------------------------------
 calamares
 cage
+foot
 qt6-wayland
 xorg-xwayland
 polkit

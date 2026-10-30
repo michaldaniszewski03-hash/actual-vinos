@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run Calamares full-screen inside cage (a single-window Wayland kiosk).
+# Start the installer session inside cage (a single-window Wayland kiosk).
 # Falls back to software rendering when there is no usable GPU, which is
 # common in VMs and with the "safe graphics" (nomodeset) boot entry.
 
@@ -10,9 +10,9 @@ export WLR_NO_HARDWARE_CURSORS=1
 
 log=/tmp/vinos-installer.log
 
-cage -s -d -- calamares >"$log" 2>&1 && exit 0
+cage -s -d -- vinos-session >"$log" 2>&1 && exit 0
 
 echo "cage exited with an error, retrying with software rendering" >>"$log"
 export WLR_RENDERER=pixman
 export QT_QUICK_BACKEND=software
-exec cage -s -d -- calamares >>"$log" 2>&1
+exec cage -s -d -- vinos-session >>"$log" 2>&1

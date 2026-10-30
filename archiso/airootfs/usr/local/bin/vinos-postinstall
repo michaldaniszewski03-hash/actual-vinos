@@ -12,9 +12,9 @@ rm -f  /etc/systemd/system/pacman-init.service \
        /etc/systemd/system/multi-user.target.wants/pacman-init.service
 rm -f  /etc/systemd/journald.conf.d/volatile-storage.conf \
        /etc/systemd/logind.conf.d/do-not-suspend.conf
-rm -f  /root/.bash_profile
+rm -f  /etc/profile.d/vinos-installer.sh
 rm -rf /etc/calamares
-rm -f  /usr/local/bin/vinos-installer
+rm -f  /usr/local/bin/vinos-installer /usr/local/bin/vinos-session /usr/local/bin/vinos-network
 
 # Root keeps its bash shell but gets a locked password until the users
 # module sets one (or leaves it locked if the user chose not to).
