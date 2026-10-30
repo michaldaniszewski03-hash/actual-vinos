@@ -1,0 +1,47 @@
+# Calamares for the vinOS live medium. Not in the official Arch repos, so the
+# ISO build compiles it into a local repository first (see tools/build-calamares.sh).
+# Qt6 build with only the modules vinOS can use.
+
+pkgname=calamares
+pkgver=3.3.14
+pkgrel=1
+pkgdesc='Distribution-independent installer framework'
+arch=('x86_64')
+url='https://calamares.io'
+license=('GPL-3.0-or-later')
+depends=(
+    'gcc-libs' 'glibc' 'icu' 'libpwquality' 'libxcrypt' 'parted' 'python' 'python-yaml'
+    'qt6-base' 'qt6-declarative' 'qt6-svg' 'yaml-cpp' 'polkit-qt6'
+    'kcoreaddons' 'kcrash' 'kconfig' 'ki18n' 'kwidgetsaddons' 'kpmcore'
+    'rsync' 'squashfs-tools' 'dosfstools' 'e2fsprogs'
+)
+makedepends=('cmake' 'extra-cmake-modules' 'ninja' 'qt6-tools' 'qt6-translations')
+source=("https://github.com/calamares/calamares/releases/download/v${pkgver}/calamares-${pkgver}.tar.gz")
+sha256sums=('5547f80db067dea923ae693ba6bb88eb2b2eeac1da3ebec42fce453e31c290c0')
+
+_skip_modules=(
+    dracut dracutlukscfg dummycpp dummyprocess dummypython
+    initramfs initramfscfg interactiveterminal mkinitfs
+    openrcdmcryptcfg plasmalnf plymouthcfg services-openrc
+    tracking oemid zfs zfshostid
+)
+
+build() {
+    cmake -S "calamares-${pkgver}" -B build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DWITH_QT6=ON \
+        -DWITH_PYTHON=ON \
+        -DWITH_PYBIND11=ON \
+        -DWITH_QML=ON \
+        -DINSTALL_CONFIG=OFF \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_SCHEMA_TESTING=OFF \
+        -DSKIP_MODULES="${_skip_modules[*]}"
+    cmake --build build
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+}
